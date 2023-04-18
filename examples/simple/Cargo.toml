@@ -11,5 +11,5 @@ path = "./main.rs"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-serde-crypt = { path = "../../../../serde-crypt/" }
+serde-crypt = "0.1.2"
 serde-crypt-macro = { path = "../../../serde-crypt-macro/" }
