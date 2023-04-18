@@ -2,6 +2,11 @@
 name = "serde-crypt-macro"
 version = "0.1.0"
 edition = "2021"
+description = "The end-to-end encrypted serde::Serializer and serde::Deserializer - wasm-ready - procedural macro to generate encrypted/decrypted type variants for both server- and client-side use"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/D3PSI/serde-crypt-macro"
+keywords = ["serde", "serialization", "crypto", "encryption"]
+categories = ["cryptography"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
