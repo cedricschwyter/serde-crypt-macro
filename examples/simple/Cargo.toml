@@ -1,0 +1,15 @@
+[package]
+name = "serde-crypt-macro-simple-example"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "serde-crypt-macro-simple-example"
+path = "./main.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde-crypt = { path = "../../../../serde-crypt/" }
+serde-crypt-macro = { path = "../../../serde-crypt-macro/" }
