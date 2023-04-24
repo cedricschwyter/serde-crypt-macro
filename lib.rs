@@ -1,6 +1,22 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{parse_macro_input, DeriveInput, Meta, MetaList};
+use syn::{parse::Parse, parse_macro_input, DeriveInput, Ident, Lit, Meta, MetaList, Token};
+
+struct SerdeCryptAttrStruct {
+    ident: Ident,
+    _punct: Token![=],
+    literal: Lit,
+}
+
+impl Parse for SerdeCryptAttrStruct {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        Ok(SerdeCryptAttrStruct {
+            ident: input.parse()?,
+            _punct: input.parse()?,
+            literal: input.parse()?,
+        })
+    }
+}
 
 #[proc_macro_attribute]
 pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
@@ -27,8 +43,14 @@ pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
                     .iter()
                     .filter(|attr| {
                         if let Meta::List(MetaList { path, tokens, .. }) = &attr.meta {
-                            if path.is_ident("serde") {
-                                // TODO: verify `tokens` to contain `with = "serde_crypt"`
+                            let tokens: SerdeCryptAttrStruct = syn::parse2(tokens.clone()).unwrap();
+                            let ident = tokens.ident.to_string();
+                            let lit: String = match tokens.literal {
+                                Lit::Str(val) => val.value(),
+                                _ => return true,
+                            };
+
+                            if path.is_ident("serde") && ident == "with" && lit == "serde_crypt" {
                                 replace = true;
                                 return false;
                             }
