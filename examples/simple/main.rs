@@ -6,6 +6,7 @@ use serde_crypt_macro::serde_crypt_gen;
 pub struct Test {
     #[serde(with = "serde_crypt")]
     pub field: Vec<u8>,
+    pub other: String,
 }
 
 fn main() {}

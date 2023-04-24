@@ -80,7 +80,7 @@ pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
             })
             .reduce(|a, e| {
                 return quote! {
-                    #a
+                    #a,
                     #e
                 };
             }),
@@ -93,14 +93,14 @@ pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
             .map(|e| quote! {#e})
             .reduce(|a, e| {
                 quote! {
-                    #a
+                    #a,
                     #e
                 }
             }),
         _ => panic!("#[serde_crypt] may only be used on structs"),
     };
 
-    let sealed_type = quote! {
+    let types = quote! {
         #attrs
         #vis struct #encrypted_ident {
             #encrypted_fields
@@ -111,5 +111,5 @@ pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
             #decrypted_fields
         }
     };
-    sealed_type.into()
+    types.into()
 }
