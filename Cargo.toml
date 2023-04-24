@@ -1,6 +1,6 @@
 [package]
 name = "serde-crypt-macro"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "The end-to-end encrypted serde::Serializer and serde::Deserializer - wasm-ready - procedural macro to generate encrypted/decrypted type variants for both server- and client-side use"
 license = "GPL-3.0-or-later"

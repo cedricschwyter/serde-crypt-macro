@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{parse::Parse, parse_macro_input, DeriveInput, Ident, Lit, Meta, MetaList, Token};
+use syn::{parse::Parse, parse_macro_input, DeriveInput, Ident, Lit, Meta, MetaList, Token, Type};
 
 struct SerdeCryptAttrStruct {
     ident: Ident,
@@ -14,6 +14,22 @@ impl Parse for SerdeCryptAttrStruct {
             ident: input.parse()?,
             _punct: input.parse()?,
             literal: input.parse()?,
+        })
+    }
+}
+
+struct SerdeCryptTypes {
+    e: Type,
+    _punct: Token![,],
+    d: Type,
+}
+
+impl Parse for SerdeCryptTypes {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        Ok(SerdeCryptTypes {
+            e: input.parse()?,
+            _punct: input.parse()?,
+            d: input.parse()?,
         })
     }
 }
@@ -38,26 +54,40 @@ pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
                 let ident = &field.ident;
                 let field_vis = &field.vis;
                 let mut replace = false;
+                let mut custom_types = false;
+                let mut ty = field.ty.clone();
                 let field_attrs = &field
                     .attrs
                     .iter()
                     .filter(|attr| {
                         if let Meta::List(MetaList { path, tokens, .. }) = &attr.meta {
-                            let tokens: Result<SerdeCryptAttrStruct, _> =
+                            let serde_tag: Result<SerdeCryptAttrStruct, _> =
                                 syn::parse2(tokens.clone());
-                            if tokens.is_err() {
-                                return true;
-                            }
-                            let tokens = tokens.unwrap();
-                            let ident = tokens.ident.to_string();
-                            let lit: String = match tokens.literal {
-                                Lit::Str(val) => val.value(),
-                                _ => return true,
-                            };
+                            let crypt_types: Result<SerdeCryptTypes, _> =
+                                syn::parse2(tokens.clone());
+                            if serde_tag.is_ok() {
+                                let tokens = serde_tag.unwrap();
+                                let ident = tokens.ident.to_string();
+                                let lit: String = match tokens.literal {
+                                    Lit::Str(val) => val.value(),
+                                    _ => return true,
+                                };
 
-                            if path.is_ident("serde") && ident == "with" && lit == "serde_crypt" {
-                                replace = true;
-                                return false;
+                                if path.is_ident("serde") && ident == "with" && lit == "serde_crypt"
+                                {
+                                    replace = true;
+                                    return false;
+                                }
+                            }
+                            if crypt_types.is_ok() {
+                                let tokens = crypt_types.unwrap();
+                                let enc = tokens.e;
+                                if path.is_ident("serde_crypt_types") {
+                                    custom_types = true;
+                                    replace = true;
+                                    ty = enc;
+                                    return false;
+                                }
                             }
                         }
                         true
@@ -70,9 +100,16 @@ pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
                         }
                     });
                 if replace {
-                    quote! {
-                        #field_attrs
-                        #field_vis #ident: String
+                    if custom_types {
+                        quote! {
+                            #field_attrs
+                            #field_vis #ident: #ty
+                        }
+                    } else {
+                        quote! {
+                            #field_attrs
+                            #field_vis #ident: String
+                        }
                     }
                 } else {
                     quote! { #field }
@@ -90,6 +127,46 @@ pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
         syn::Data::Struct(ref data_struct) => data_struct
             .fields
             .iter()
+            .map(|field| {
+                let ident = &field.ident;
+                let field_vis = &field.vis;
+                let mut custom_types = false;
+                let mut ty = field.ty.clone();
+                let field_attrs = &field
+                    .attrs
+                    .iter()
+                    .filter(|attr| {
+                        if let Meta::List(MetaList { path, tokens, .. }) = &attr.meta {
+                            let crypt_types: Result<SerdeCryptTypes, _> =
+                                syn::parse2(tokens.clone());
+                            if crypt_types.is_ok() {
+                                let tokens = crypt_types.unwrap();
+                                let dec = tokens.d;
+                                if path.is_ident("serde_crypt_types") {
+                                    custom_types = true;
+                                    ty = dec;
+                                    return false;
+                                }
+                            }
+                        }
+                        true
+                    })
+                    .map(|e| quote! {#e})
+                    .reduce(|a, e| {
+                        quote! {
+                            #a
+                            #e
+                        }
+                    });
+                if custom_types {
+                    quote! {
+                        #field_attrs
+                        #field_vis #ident: #ty
+                    }
+                } else {
+                    quote! { #field }
+                }
+            })
             .map(|e| quote! {#e})
             .reduce(|a, e| {
                 quote! {
