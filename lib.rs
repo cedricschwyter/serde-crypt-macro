@@ -43,7 +43,12 @@ pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
                     .iter()
                     .filter(|attr| {
                         if let Meta::List(MetaList { path, tokens, .. }) = &attr.meta {
-                            let tokens: SerdeCryptAttrStruct = syn::parse2(tokens.clone()).unwrap();
+                            let tokens: Result<SerdeCryptAttrStruct, _> =
+                                syn::parse2(tokens.clone());
+                            if tokens.is_err() {
+                                return true;
+                            }
+                            let tokens = tokens.unwrap();
                             let ident = tokens.ident.to_string();
                             let lit: String = match tokens.literal {
                                 Lit::Str(val) => val.value(),
