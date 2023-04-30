@@ -121,7 +121,7 @@ pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
                     #e
                 };
             }),
-        _ => panic!("#[serde_crypt] may only be used on structs"),
+        _ => panic!("#[serde_crypt_gen] may only be used on structs"),
     };
     let decrypted_fields = match &ast.data {
         syn::Data::Struct(ref data_struct) => data_struct
@@ -161,6 +161,7 @@ pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
                 if custom_types {
                     quote! {
                         #field_attrs
+                        #[serde(with = "serde_crypt")]
                         #field_vis #ident: #ty
                     }
                 } else {
@@ -174,7 +175,7 @@ pub fn serde_crypt_gen(_meta: TokenStream, input: TokenStream) -> TokenStream {
                     #e
                 }
             }),
-        _ => panic!("#[serde_crypt] may only be used on structs"),
+        _ => panic!("#[serde_crypt_gen] may only be used on structs"),
     };
 
     let types = quote! {
