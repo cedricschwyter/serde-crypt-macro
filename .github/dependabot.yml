@@ -1,0 +1,4 @@
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "daily"
